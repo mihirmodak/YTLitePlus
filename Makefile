@@ -46,9 +46,18 @@ REMOVE_EXTENSIONS = 1
 CODESIGN_IPA = 0
 
 YTLITE_PATH = Tweaks/YTLite
+# Check if YTLITE_VERSION is already set as an environment variable (from CI)
+ifndef YTLITE_VERSION
+# If GITHUB_TOKEN is available, use it for authenticated API calls
+ifdef GITHUB_TOKEN
+YTLITE_VERSION := $(shell curl -s -H "Authorization: token $(GITHUB_TOKEN)" https://api.github.com/repos/dayanch96/YTLite/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+else
+# Fall back to unauthenticated call (may hit rate limits)
 YTLITE_VERSION := $(shell curl -s https://api.github.com/repos/dayanch96/YTLite/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+endif
 ifeq ($(YTLITE_VERSION),)
-$(error Failed to fetch latest YTLite version from GitHub API)
+$(error Failed to fetch latest YTLite version from GitHub API. Try setting GITHUB_TOKEN environment variable.)
+endif
 endif
 YTLITE_DEB = $(YTLITE_PATH)/com.dvntm.ytlite_$(YTLITE_VERSION)_iphoneos-arm64.deb
 YTLITE_DYLIB = $(YTLITE_PATH)/var/jb/Library/MobileSubstrate/DynamicLibraries/YTLite.dylib
